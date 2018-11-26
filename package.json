@@ -1,0 +1,35 @@
+{
+  "name": "automat-test",
+  "version": "1.0.0",
+  "description": "Test application for Automat.ai",
+  "main": "App.ts",
+  "scripts": {
+    "start": "npm run check && cross-env NODE_OPTIONS=--max_old_space_size=4096 webpack-dev-server --host=0.0.0.0 --port=7777 --content-base=config --config config/webpack.config.js --watch --no-info --progress",
+    "check": "check-dependencies",
+    "lint": "tslint --project config/tslint.json",
+    "build": "webpack --config config/webpack.config.prod.js"
+  },
+  "pre-commit": [
+    "lint"
+  ],
+  "keywords": [
+    "typescript",
+    "javascript"
+  ],
+  "author": "Florian Fievet",
+  "license": "GPL-3.0",
+  "devDependencies": {
+    "awesome-typescript-loader": "^5.2.1",
+    "axios": "^0.18.0",
+    "check-dependencies": "^1.1.0",
+    "cross-env": "^5.2.0",
+    "html-webpack-plugin": "^3.2.0",
+    "ignore-loader": "^0.1.2",
+    "ts-loader": "^5.3.0",
+    "typescript": "^3.1.6",
+    "webpack": "^4.26.0",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10",
+    "worker-loader": "^2.0.0"
+  }
+}
