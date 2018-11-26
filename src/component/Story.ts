@@ -1,5 +1,6 @@
 import * as StoryWorker from '../workers/Story.worker' // hack to make sure all the file is imported, to be build separatly
-import { AbstractStoryWorker as IWorker, IMyMessageEvent, MESSAGE_TYPE } from '../workers/types.d'
+import { AbstractStoryWorker as IWorker, IMyMessageEvent, WorkerEvent } from '../workers/types.d'
+import { StoryEvent } from './types.d'
 import EventDispatcher from '../core/EventDispatcher'
 
 /**
@@ -17,18 +18,18 @@ export default class Story extends EventDispatcher {
         this.autoTerminate = !reusable
 
         this.worker = (StoryWorker as any)('')
-        this.worker.addEventListener('message', (response: IMyMessageEvent) => {
+        this.worker.addEventListener(WorkerEvent.MESSAGE, (response: IMyMessageEvent) => {
             this.ready = true
             // time could change from a Story to another, 'cause Worker have to wait for an available thread
             console.timeEnd(`story${this.id}`)
 
             switch(response.data.type) {
-                case MESSAGE_TYPE.RESULT:
-                    this.dispatch('complete', response.data.data)
+                case WorkerEvent.RESULT:
+                    this.dispatch(StoryEvent.COMPLETE, response.data.data)
                     break
-                case MESSAGE_TYPE.ERROR:
+                case WorkerEvent.ERROR:
                     console.error('[Story]: worker has failed.')
-                    this.dispatch('error', response.data)
+                    this.dispatch(StoryEvent.ERROR, response.data)
                     break
             }
             if (this.autoTerminate) {
@@ -41,7 +42,7 @@ export default class Story extends EventDispatcher {
         this.id = id
         this.ready = false
         console.time(`story${this.id}`)
-        this.worker.postMessage({type: MESSAGE_TYPE.REQUEST, id: this.id})
+        this.worker.postMessage({type: WorkerEvent.REQUEST, id: this.id})
     }
 
     terminate(): void {

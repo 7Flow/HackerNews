@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios'
 
 import Config from '../core/Config'
-import { AbstractStoryWorker, IStoryData, IMyMessageEvent, MESSAGE_TYPE } from './types.d'
+import { AbstractStoryWorker, IStoryData, IMyMessageEvent, WorkerEvent } from './types.d'
 import { IItem } from '../typings/hackernews'
 import ObjectQuickSort, { ISortableObject } from '../utils/ObjectQuickSort'
 
@@ -16,7 +16,7 @@ ctx.onmessage = function(event: IMyMessageEvent): void {
     ctx.completed = 0       // number of  API call currently completed
     ctx.length = 0          // total number of item to load to collect comment's datas
     switch (msg.type) {
-        case MESSAGE_TYPE.REQUEST:
+        case WorkerEvent.REQUEST:
             ctx.id = msg.id
             const _url = (Config.baseUrl + Config.endPoints.item).replace('{id}', msg.id.toString())
             axios.get(_url).then((response: AxiosResponse) => {
@@ -28,11 +28,11 @@ ctx.onmessage = function(event: IMyMessageEvent): void {
                 ctx.loadChildren(response.data)
             }).catch((error: any) => {
                 console.error(error)
-                ctx.postMessage({type: MESSAGE_TYPE.ERROR, error: error.toString()})
+                ctx.postMessage({type: WorkerEvent.ERROR, error: error.toString()})
                 ctx.ready = true
             })
             return
-        case MESSAGE_TYPE.RESULT:
+        case WorkerEvent.RESULT:
             return
     }
 }
@@ -46,27 +46,33 @@ ctx.loadChildren = function(item: IItem): void {
         ctx.length += item.kids.length
         for (let i = 0; i < item.kids.length; ++i) {
             const _url = (Config.baseUrl + Config.endPoints.item).replace('{id}', item.kids[i].toString())
-            axios.get(_url).then((response: AxiosResponse) => {
-                ++ctx.completed
-                if (!response.data.deleted) {
-                    if (ctx.commentsByUser.has(response.data.by)) {
-                        ctx.commentsByUser.set(response.data.by, ctx.commentsByUser.get(response.data.by) + 1)
-                    } else {
-                        ctx.commentsByUser.set(response.data.by, 1)
-                    }
-                    ctx.loadChildren(response.data)
-                } else {
-                    ctx.onComplete()
-                }
-            }).catch((error: any) => {
-                ++ctx.completed
-                console.error(error)
-                ctx.onComplete()
-            })
+            axios.get(_url)
+                .then(ctx.onResponse)
+                .catch(ctx.onError)
         }
     } else {
         ctx.onComplete()
     }
+}
+
+ctx.onResponse = function(response: AxiosResponse): void {
+    ++ctx.completed
+    if (!response.data.deleted) {
+        if (ctx.commentsByUser.has(response.data.by)) {
+            ctx.commentsByUser.set(response.data.by, ctx.commentsByUser.get(response.data.by) + 1)
+        } else {
+            ctx.commentsByUser.set(response.data.by, 1)
+        }
+        ctx.loadChildren(response.data)
+    } else {
+        ctx.onComplete()
+    }
+}
+
+ctx.onError = function(error: any): void {
+    ++ctx.completed
+    console.error(error)
+    ctx.onComplete()
 }
 
 ctx.onComplete = function(): void {
@@ -91,7 +97,7 @@ ctx.onComplete = function(): void {
             commentsByUser: ctx.commentsByUser,
         } as IStoryData
 
-        ctx.postMessage({type: MESSAGE_TYPE.RESULT, data: _data, bubbles: false})
+        ctx.postMessage({type: WorkerEvent.RESULT, data: _data, bubbles: false})
         ctx.ready = true
     }
 }

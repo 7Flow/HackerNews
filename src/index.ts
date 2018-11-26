@@ -5,6 +5,7 @@ import axios, {AxiosResponse} from 'axios'
 import {IStoryData} from "./workers/types"
 import {IItem} from "./typings/hackernews";
 import {ISortableObject, default as ObjectQuickSort} from "./utils/ObjectQuickSort";
+import {StoryEvent} from "./component/types";
 
 const LIMIT = 30            // limit calls for benchmarking
 const WORKER_POOL_SIZE = 4  // number of concurrent Workers (tweak this number to see performance impact)
@@ -59,8 +60,8 @@ export default class App {
      */
     createStoryWorker(index: number, id?: number): void {
         const _story = new Story(true)
-        _story.addListener('complete', this.onComplete)
-        _story.addListener('error', this.onComplete)
+        _story.addListener(StoryEvent.COMPLETE, this.onComplete)
+        _story.addListener(StoryEvent.ERROR, this.onComplete)
 
         this.workerPool[index] = _story
 
@@ -71,7 +72,6 @@ export default class App {
 
     /**
      * Load the next story, if there is others stories to load
-     * -
      */
     loadNextStory(id: number): void {
         // find a ready Worker
@@ -91,7 +91,7 @@ export default class App {
     }
 
     /**
-     *
+     * Once a story is complete, look for remaining stories to load.
      * @param {IStoryData} data
      */
     onComplete(data: IStoryData): void {
