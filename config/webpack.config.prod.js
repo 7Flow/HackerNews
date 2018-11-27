@@ -2,6 +2,7 @@ const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const AfterCompilePlugin = require('./AfterCompilePlugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
     entry: './src/index.ts',
@@ -16,6 +17,14 @@ module.exports = {
                 test: /\.tsx?$/,
                 loader: 'awesome-typescript-loader',
                 exclude: /node_modules/
+            },
+            {
+                test: /\.svg$/,
+                loader: 'url-loader?limit=8192',
+            },
+            {
+                test: /\.scss$/,
+                loader: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader'],
             }
         ]
     },
@@ -40,6 +49,10 @@ module.exports = {
                     }
                 }
             }
+        }),
+        new MiniCssExtractPlugin({
+            filename: "[name].css",
+            chunkFilename: "[id].css"
         })
     ],
     optimization: {

@@ -2,10 +2,13 @@ import Config from './core/config'
 
 import Story from './component/Story'
 import axios, {AxiosResponse} from 'axios'
-import {IStoryData} from "./workers/types"
-import {IItem} from "./typings/hackernews";
-import {ISortableObject, default as ObjectQuickSort} from "./utils/ObjectQuickSort";
-import {StoryEvent} from "./component/types";
+import {IStoryData} from './workers/types'
+import {IItem, ItemType} from './typings/hackernews'
+import {ISortableObject, default as ObjectQuickSort} from './utils/ObjectQuickSort'
+import {StoryEvent} from './component/types'
+
+const theme = require('./theme/theme.scss')
+const loader = require('./theme/assets/pacman-loader.svg')
 
 const LIMIT = 30            // limit calls for benchmarking
 const WORKER_POOL_SIZE = 4  // number of concurrent Workers (tweak this number to see performance impact)
@@ -27,9 +30,20 @@ export default class App {
     stories: Map<number, IStoryData>  // used to store Story results
     commentsByUser: Map<string, number> // final data
 
+    container: HTMLElement
+    loader: HTMLImageElement
+
     constructor() {
         this.stories = new Map<number, IStoryData>()
         this.commentsByUser = new Map<string, number>()
+        this.container = document.getElementById('app')
+        if (!this.container) {
+            console.error('[App] No container present in HTML.')
+        }
+
+        this.loader = document.createElement("img")
+        this.loader.src = loader
+        this.container.append(this.loader)
 
         this.onComplete = this.onComplete.bind(this)
     }
@@ -123,6 +137,9 @@ export default class App {
      */
     finalGather(): void {
         console.time('finalGather')
+
+        this.container.removeChild(this.loader)
+
         for (const story of this.stories.values()) {
             this.displayStory(story)
             for (const [user, count] of story.commentsByUser.entries()) {
@@ -169,21 +186,11 @@ export default class App {
         _d.textContent = '-------------------------------------------'
         _fragment.appendChild( _d )
 
-        const App = document.getElementById('app')
-        if (App) {
-            App.appendChild(_fragment)
-        } else {
-            console.log('[App] No container present in HTML.')
-        }
+        this.container.appendChild(_fragment)
     }
 
     displayResults(users: any[]) {
-        const App = document.getElementById('app')
-        if (App) {
-            App.appendChild( this.createUserList(users) )
-        } else {
-            console.log('[App] No container present in HTML.')
-        }
+        this.container.appendChild( this.createUserList(users) )
     }
 
     createUserList(users: any[]): DocumentFragment {

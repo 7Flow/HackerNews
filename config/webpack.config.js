@@ -20,7 +20,16 @@ module.exports = {
                 test: /\.tsx?$/,
                 loader: 'awesome-typescript-loader',
                 exclude: /node_modules/
+            },
+            {
+                test: /\.svg$/,
+                loader: 'url-loader?limit=8192',
+            },
+            {
+                test: /\.scss$/,
+                loader: ['style-loader', 'css-loader', 'sass-loader'],
             }
+
         ]
     },
     resolve: {
