@@ -1,5 +1,7 @@
 # Hacker News Tests
 
+[![Maintainability](https://api.codeclimate.com/v1/badges/159985410ee4c2994516/maintainability)](https://codeclimate.com/github/7Flow/HackerNews/maintainability)
+
 ## Problem
 The main problem is the number of request we have to make to fetch all data.
 Browsers can make several call in parallel (but have a limit per domain), but all the javascript events and processes will occurs on the main thread.
